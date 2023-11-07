@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.nomnom.raycast-visualization": {
+      "version": "https://github.com/nomnomab/RaycastVisualization.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "21bcd52b8cf0e2ed7c8446ed73cafeca0c7b9ad3"
+    },
     "com.unity.ext.nunit": {
       "version": "1.0.6",
       "depth": 1,

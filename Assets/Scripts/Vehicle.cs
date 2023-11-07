@@ -1,10 +1,19 @@
+using Nomnom.RaycastVisualization;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent( typeof(Rigidbody) )]
 public class Vehicle : MonoBehaviour
 {
+    public static UnityEvent onJump = new();
+    public static UnityEvent onLand = new();
+    public static UnityEvent<bool> onFly = new();
+    public static UnityEvent<float> onTurn = new();
+    public static UnityEvent<GameObject> onBump = new();
+
     public float speed = 5;
     public float turnSpeed = 90;
+    [Header("Jumping")]
     public float jumpHeight = 5;
     public float gravity = 9.8f;
     Rigidbody rb;
@@ -15,33 +24,36 @@ public class Vehicle : MonoBehaviour
     float triedToJumpSecondsAgo = 999;
     float jumpedSecondsAgo;
     bool wannaJump;
-    float rayDistance;
+    Collider collider;
     Bounds colliderBounds;
     public LayerMask jumpMask;
+    public bool isGrounded;
 
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         Physics.gravity = Vector3.down * gravity;
-        colliderBounds = GetComponent<Collider>().bounds;
-        rayDistance = colliderBounds.extents.y + 0.01f;
+        collider = GetComponent<Collider>();
     }
 
     void Update()
     {
+        colliderBounds = collider.bounds;
+        isGrounded = IsGrounded();
+        onFly.Invoke(!isGrounded);
+
         // TRY TO JUMP
         triedToJumpSecondsAgo += Time.deltaTime;
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            triedToJumpSecondsAgo = 0;
-        }
+    }
 
+    void FixedUpdate()
+    {
         // JUMP
         jumpedSecondsAgo += Time.deltaTime;
         var stillWannaJump = triedToJumpSecondsAgo <= jumpMemory;
         var canJump = jumpedSecondsAgo >= jumpTimeout;
-        if (stillWannaJump && canJump && IsGrounded())
+        if (stillWannaJump && canJump && isGrounded)
         {
             Jump();
         }
@@ -49,10 +61,17 @@ public class Vehicle : MonoBehaviour
         // MOVE
         var vel = transform.forward * speed;
         rb.velocity = new Vector3(vel.x, rb.velocity.y, vel.z);
+    }
 
-        // TURN
-        var h = Input.GetAxis("Horizontal");
-        transform.Rotate(0,turnSpeed * h * Time.deltaTime,0);
+    public void Turn(float side)
+    {
+        rb.MoveRotation( rb.rotation * Quaternion.Euler(0,turnSpeed * side * Time.deltaTime,0));
+        onTurn.Invoke(side);
+    }
+
+    public void TryJump()
+    {
+        triedToJumpSecondsAgo = 0;
     }
 
     void Jump()
@@ -60,7 +79,7 @@ public class Vehicle : MonoBehaviour
         var jumpSpeed = HeightToSpeed(jumpHeight);
         rb.velocity += Vector3.up * jumpSpeed;
         jumpedSecondsAgo = 0;
-        print("jumping with speed " + jumpSpeed);
+        onJump.Invoke();
     }
 
     float HeightToSpeed(float height)
@@ -70,13 +89,19 @@ public class Vehicle : MonoBehaviour
 
     bool IsGrounded()
     {
-        return Physics.BoxCast(
-            colliderBounds.center,
-            colliderBounds.extents,
-            Vector3.down,
-            Quaternion.identity,
-            rayDistance,
-            jumpMask
-        );
+        var ray = new Ray(transform.position, Vector3.down);
+        return VisualPhysics.Raycast(ray, 0.51f, jumpMask);
+    }
+
+    void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Terrain"))
+        {
+            onLand.Invoke();
+        }
+        else
+        {
+            onBump.Invoke(other.gameObject);
+        }
     }
 }
