@@ -1,3 +1,4 @@
+using NaughtyAttributes;
 using Nomnom.RaycastVisualization;
 using UnityEngine;
 using UnityEngine.Events;
@@ -12,11 +13,17 @@ public class Vehicle : MonoBehaviour
     [HideInInspector]public UnityEvent<GameObject> onBump = new();
 
     public float speed = 5;
+    Vector3 velocity;
+    [Header("Turning")]
     public float turnSpeed = 90;
+    public float turnTime = 1;
+    float currentTurnTime;
+    float turnDirection;
+    [CurveRange(0,0,1,1)]public AnimationCurve turnSpeedCurve;
     [Header("Jumping")]
     public float jumpHeight = 5;
     public float gravity = 9.8f;
-    Rigidbody rb;
+    public Rigidbody rb { get; private set; }
 
     // JUMPING
     [SerializeField]float jumpMemory;
@@ -41,6 +48,7 @@ public class Vehicle : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         Physics.gravity = Vector3.down * gravity;
         collider = GetComponent<Collider>();
+        rb.detectCollisions = true;
     }
 
     void Update()
@@ -55,6 +63,17 @@ public class Vehicle : MonoBehaviour
 
     void FixedUpdate()
     {
+        // GRAVITY
+        if (!isGrounded)
+        {
+            velocity.y -= gravity * Time.deltaTime;
+        }
+        else
+        {
+            velocity.y = 0;
+            rb.MovePosition( new Vector3(rb.position.x, colliderBounds.extents.y, rb.position.z));
+        }
+
         // JUMP
         jumpedSecondsAgo += Time.deltaTime;
         var stillWannaJump = triedToJumpSecondsAgo <= jumpMemory;
@@ -66,12 +85,21 @@ public class Vehicle : MonoBehaviour
 
         // MOVE
         var vel = transform.forward * speed;
-        rb.velocity = new Vector3(vel.x, rb.velocity.y, vel.z);
+        velocity.x = vel.x;
+        velocity.z = vel.z;
+
+        rb.MovePosition( rb.position + velocity * Time.deltaTime);
+
+        // TURN
+        currentTurnTime += Time.deltaTime;
+        if(turnDirection == 0)currentTurnTime = 0;
+        var turnSpeedNow = turnSpeedCurve.Evaluate(currentTurnTime / turnTime);
+        rb.MoveRotation( rb.rotation * Quaternion.Euler(0,turnSpeedNow * turnDirection * turnSpeed * Time.deltaTime,0));
     }
 
     public void Turn(float side)
     {
-        rb.MoveRotation( rb.rotation * Quaternion.Euler(0,turnSpeed * side * Time.deltaTime,0));
+        turnDirection = side;
         onTurn.Invoke(side);
     }
 
@@ -83,7 +111,7 @@ public class Vehicle : MonoBehaviour
     void Jump()
     {
         var jumpSpeed = HeightToSpeed(jumpHeight);
-        rb.velocity += Vector3.up * jumpSpeed;
+        velocity.y += jumpSpeed;
         jumpedSecondsAgo = 0;
         onJump.Invoke();
     }
