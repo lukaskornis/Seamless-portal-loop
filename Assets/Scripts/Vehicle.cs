@@ -5,11 +5,11 @@ using UnityEngine.Events;
 [RequireComponent( typeof(Rigidbody) )]
 public class Vehicle : MonoBehaviour
 {
-    public static UnityEvent onJump = new();
-    public static UnityEvent onLand = new();
-    public static UnityEvent<bool> onFly = new();
-    public static UnityEvent<float> onTurn = new();
-    public static UnityEvent<GameObject> onBump = new();
+    [HideInInspector]public UnityEvent onJump = new();
+    [HideInInspector]public UnityEvent onLand = new();
+    [HideInInspector]public ChangeEvent<bool> onFly = new();
+    [HideInInspector]public ChangeEvent<float> onTurn = new();
+    [HideInInspector]public UnityEvent<GameObject> onBump = new();
 
     public float speed = 5;
     public float turnSpeed = 90;
@@ -28,7 +28,13 @@ public class Vehicle : MonoBehaviour
     Bounds colliderBounds;
     public LayerMask jumpMask;
     public bool isGrounded;
+    public bool isPlayer;
+    public static Vehicle Player;
 
+    void Awake()
+    {
+        if(isPlayer)Player = this;
+    }
 
     void Start()
     {

@@ -10099,6 +10099,7 @@ GameObject:
   - component: {fileID: 771700305}
   - component: {fileID: 771700306}
   - component: {fileID: 771700307}
+  - component: {fileID: 771700308}
   m_Layer: 0
   m_Name: Vehicle
   m_TagString: Untagged
@@ -10118,6 +10119,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 568200b5878284941b04fb61d05329b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  onJump:
+    m_PersistentCalls:
+      m_Calls: []
+  onLand:
+    m_PersistentCalls:
+      m_Calls: []
+  onBump:
+    m_PersistentCalls:
+      m_Calls: []
   speed: 8
   turnSpeed: 180
   jumpHeight: 1.5
@@ -10128,6 +10138,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   isGrounded: 0
+  isPlayer: 1
 --- !u!65 &771700299
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10420,6 +10431,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d4505fb94c5f413cb7bc3c8bcb6cd67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &771700308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 771700297}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fae32d633368c4950a370b4e11cbdd12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &847309633

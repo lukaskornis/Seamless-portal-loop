@@ -16,11 +16,11 @@ public class SlideVisuals : MonoBehaviour
 
     void Start()
     {
-        Vehicle.onJump.AddListener(OnJump);
-        Vehicle.onLand.AddListener(OnLand);
-        Vehicle.onTurn.AddListener(OnTurn);
-        Vehicle.onBump.AddListener(OnBump);
-        Vehicle.onFly.AddListener(OnFly);
+        Vehicle.Player.onJump.AddListener(OnJump);
+        Vehicle.Player.onLand.AddListener(OnLand);
+        Vehicle.Player.onTurn.AddListener(OnTurn);
+        Vehicle.Player.onBump.AddListener(OnBump);
+        Vehicle.Player.onFly.AddListener(OnFly);
     }
 
     void OnTurn(float side)
