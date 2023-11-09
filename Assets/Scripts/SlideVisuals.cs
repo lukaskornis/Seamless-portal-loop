@@ -23,6 +23,12 @@ public class SlideVisuals : MonoBehaviour
         Vehicle.Player.onTurn.AddListener(OnTurn);
         Vehicle.Player.onBump.AddListener(OnBump);
         Vehicle.Player.onFly.AddListener(OnFly);
+        Controls.onTurn.AddListener(OnTurnControls);
+    }
+
+    void OnTurnControls(int side)
+    {
+        targetLeanAngle = -side * leanAngle;
     }
 
     void Update()

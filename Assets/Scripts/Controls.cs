@@ -1,9 +1,12 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class Controls : MonoBehaviour
 {
     Vehicle vehicle;
+    public static ChangeEvent<int> onTurn = new();
 
     void Start()
     {
@@ -21,12 +24,7 @@ public class Controls : MonoBehaviour
         }
 
 
-        // if started touching left side of screen with one finger
-        // and started touching right side of screen with another finger
-
-        // if any finger is touching left side of screen
-        // if touchscreen supported
-        if(Input.touchSupported)MobileControls();
+        MobileControls();
     }
 
     public enum FingerState
@@ -39,54 +37,79 @@ public class Controls : MonoBehaviour
     public float tapTime = 0.2f;
     float leftTouchDuration;
     float rightTouchDuration;
+    int leftTicks;
+    int rightTicks;
+    TouchPhase lastLeftPhase;
+    TouchPhase lastRightPhase;
 
     void MobileControls()
     {
-        bool couldJump = false;
+        bool wannaJump = false;
         var leftTouch = Input.touches.FirstOrDefault(t => t.position.x < Screen.width / 2f);
         var rightTouch = Input.touches.FirstOrDefault(t => t.position.x > Screen.width / 2f);
 
-
-        if(leftTouch.phase is TouchPhase.Stationary or TouchPhase.Moved)leftTouchDuration += Time.deltaTime;
+        if (leftTouch.phase is TouchPhase.Stationary or TouchPhase.Moved)
+        {
+            leftTouchDuration += Time.deltaTime;
+            leftTicks++;
+        }
         if (leftTouch.phase == TouchPhase.Ended || leftTouch.phase == TouchPhase.Canceled)
         {
             leftTouchDuration = 0;
-            couldJump = true;
+            leftTicks = 0;
+            wannaJump = true;
         }
 
-        if(rightTouch.phase is TouchPhase.Stationary or TouchPhase.Moved)rightTouchDuration += Time.deltaTime;
+
+        if (rightTouch.phase is TouchPhase.Stationary or TouchPhase.Moved)
+        {
+            rightTouchDuration += Time.deltaTime;
+            rightTicks++;
+        }
         if (rightTouch.phase == TouchPhase.Ended || rightTouch.phase == TouchPhase.Canceled)
         {
             rightTouchDuration = 0;
-            couldJump = true;
+            rightTicks = 0;
+            wannaJump = true;
         }
 
-        print( $"Could jump:{leftTouch.phase} Left: {leftTouchDuration} Right: {rightTouchDuration}");
 
-        var combined = leftTouchDuration + rightTouchDuration;
-        if(couldJump && combined > 0f && combined < tapTime*2)
+
+        var leftJustPressed = leftTicks == 1;
+        var rightJustPressed = rightTicks == 1;
+
+        var leftTap = leftTouchDuration > 0f &&  leftTouchDuration < tapTime;
+        var rightTap = rightTouchDuration > 0f && rightTouchDuration < tapTime;
+        var leftHold = leftTouchDuration >= tapTime;
+        var rightHold = rightTouchDuration >= tapTime;
+
+        if(leftTicks > 0)onTurn.Invoke(-1);
+        else if(rightTicks > 0)onTurn.Invoke(1);
+
+
+        if((leftTap && rightTap && (leftJustPressed || rightJustPressed)))
         {
             vehicle.TryJump();
+            print("Touch delta : " + (leftTouchDuration - rightTouchDuration));
         }
 
-
-        if (leftTouchDuration > rightTouchDuration)
+        if (leftHold)
         {
-            // turn left
-            if (leftTouchDuration > tapTime)
+            if(wannaJump) vehicle.TryJump();
+
+            if (rightHold && rightTouchDuration < leftTouchDuration)
             {
-                vehicle.Turn( -1 );
-                if(couldJump)vehicle.TryJump();
+                vehicle.Turn(1);
+            }
+            else
+            {
+                vehicle.Turn(-1);
             }
         }
-        else
+        else if (rightHold)
         {
-            // turn right
-            if (rightTouchDuration > tapTime)
-            {
-                vehicle.Turn( 1 );
-                if(couldJump)vehicle.TryJump();
-            }
+            if (wannaJump) vehicle.TryJump();
+            vehicle.Turn(1);
         }
     }
 }
